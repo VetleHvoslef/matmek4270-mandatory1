@@ -2,8 +2,6 @@ import numpy as np
 import sympy as sp
 import scipy.sparse as sparse
 
-x, y = sp.symbols('x,y')
-
 class Poisson2D:
     r"""Solve Poisson's equation in 2D::
 
@@ -12,7 +10,6 @@ class Poisson2D:
     where L is the length of the domain in both x and y directions.
     Dirichlet boundary conditions are used for the entire boundary.
     The Dirichlet values depend on the chosen manufactured solution.
-
     """
 
     def __init__(self, L, ue):
@@ -28,12 +25,18 @@ class Poisson2D:
         """
         self.L = L
         self.ue = ue
-        self.f = sp.diff(self.ue, x, 2)+sp.diff(self.ue, y, 2)
+        self.f = sp.diff(self.ue, x, 2) + sp.diff(self.ue, y, 2)
+
 
     def create_mesh(self, N):
         """Create 2D mesh and store in self.xij and self.yij"""
-        # self.xij, self.yij ...
-        raise NotImplementedError
+        L = self.L
+        self.h = L/N
+        x_axis = np.linspace(0, L, N + 1)
+        y_axis = np.linspace(0, L, N + 1)
+
+        self.xij, self.yij = np.meshgrid(x_axis, y_axis, indexing = "ij", sparse = True)
+
 
     def D2(self):
         """Return second order differentiation matrix"""
@@ -49,8 +52,9 @@ class Poisson2D:
 
     def assemble(self):
         """Return assembled matrix A and right hand side vector b"""
-        # return A, b
-        raise NotImplementedError
+        
+
+        return A, b
 
     def l2_error(self, u):
         """Return l2-error norm"""
@@ -128,4 +132,11 @@ def test_interpolation():
     U = sol(100)
     assert abs(sol.eval(0.52, 0.63) - ue.subs({x: 0.52, y: 0.63}).n()) < 1e-3
     assert abs(sol.eval(sol.h/2, 1-sol.h/2) - ue.subs({x: sol.h, y: 1-sol.h/2}).n()) < 1e-3
+
+def main():
+    x, y = sp.symbols('x,y')
+
+
+if __name__ == "__main__":
+    main()
 
