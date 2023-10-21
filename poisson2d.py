@@ -34,7 +34,12 @@ class Poisson2D:
         self.N = N
         self.h = L/N
         x_axis = np.linspace(0, L, N + 1)
+
         y_axis = np.linspace(0, L, N + 1)
+        if self.h == x_axis[1] - x_axis[0]:
+            print("h is equal to dx")
+            print("remove exit")
+            exit()
 
         self.xij, self.yij = np.meshgrid(x_axis, y_axis, indexing = "ij", sparse = True)
 
@@ -48,11 +53,18 @@ class Poisson2D:
 
     def laplace(self):
         """Return vectorized Laplace operator"""
-        raise NotImplementedError
+        D2x = (1/self.h**2) * self.D2()
+        D2y = (1/self.h**2) * self.D2()
+        return (sparse.kron(D2x, sparse.eye(self.N + 1)) +
+                sparse.kron(sparse.eye(self.N + 1), D2y))
+
 
     def get_boundary_indices(self):
         """Return indices of vectorized matrix that belongs to the boundary"""
-        raise NotImplementedError
+        B = np.ones((self.N + 1, self.N + 1), dtype=bool)
+        B[1:-1, 1:-1] = 0
+        bnds = np.where(B.ravel() == 1)[0]
+        return bnds
 
     def assemble(self):
         """Return assembled matrix A and right hand side vector b"""
