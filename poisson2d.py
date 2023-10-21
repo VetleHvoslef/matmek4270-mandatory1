@@ -31,6 +31,7 @@ class Poisson2D:
     def create_mesh(self, N):
         """Create 2D mesh and store in self.xij and self.yij"""
         L = self.L
+        self.N = N
         self.h = L/N
         x_axis = np.linspace(0, L, N + 1)
         y_axis = np.linspace(0, L, N + 1)
@@ -40,7 +41,10 @@ class Poisson2D:
 
     def D2(self):
         """Return second order differentiation matrix"""
-        raise NotImplementedError
+        D = sparse.diags([1, -2, 1], [-1, 0, 1], (self.N + 1, self.N + 1), 'lil')
+        D[0, :4] = 2, -5, 4, -1
+        D[-1, -4:] = -1, 4, -5, 2
+        return D
 
     def laplace(self):
         """Return vectorized Laplace operator"""
