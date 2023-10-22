@@ -41,7 +41,7 @@ class Poisson2D:
             print("remove exit")
             exit()
 
-        self.xij, self.yij = np.meshgrid(x_axis, y_axis, indexing = "ij", sparse = True)
+        self.xij, self.yij = np.meshgrid(x_axis, y_axis, indexing = "ij")
 
 
     def D2(self):
@@ -68,13 +68,28 @@ class Poisson2D:
 
     def assemble(self):
         """Return assembled matrix A and right hand side vector b"""
-        
+        F = sp.lambdify((x, y), self.f)(self.xij, self.yij)
+        A = self.laplace()
+        u_exact = sp.lambdify((x, y), self.ue)(self.xij, self.yij)
 
+        # Boundary:
+        boundary_indices = self.get_boundary_indices()
+        A = A.tolil()
+        for i in boundary_indices:
+            A[i] = 0
+            A[i, i] = 1
+        A.toscr()
+
+        b = F.ravel()
+        u_exact = u_exact.ravel()
+        b[boundary_indices] = u_exact[boundary_indices]
         return A, b
 
     def l2_error(self, u):
         """Return l2-error norm"""
-        raise NotImplementedError
+        u_exact = sp.lambdify((x, y), self.ue)(self.xij, self.yij)
+        l2_error_norm = np.sqrt(self.h**2 * np.sum((u - u_exact)**2))
+        return l2_error_norm
 
     def __call__(self, N):
         """Solve Poisson's equation.
@@ -133,7 +148,11 @@ class Poisson2D:
         The value of u(x, y)
 
         """
-        raise NotImplementedError
+        # Finding nearest index:
+        ...
+        # Fortsett på denne her:
+        # Bruker dette https://en.wikipedia.org/wiki/Bilinear_interpolation#Weighted_mean
+
 
 def test_convergence_poisson2d():
     # This exact solution is NOT zero on the entire boundary
