@@ -2,6 +2,8 @@ import numpy as np
 import sympy as sp
 import scipy.sparse as sparse
 
+x, y = sp.symbols('x,y')
+
 class Poisson2D:
     r"""Solve Poisson's equation in 2D::
 
@@ -198,8 +200,9 @@ def test_interpolation():
     assert abs(sol.eval(sol.h/2, 1-sol.h/2) - ue.subs({x: sol.h, y: 1-sol.h/2}).n()) < 1e-3
 
 def main():
-    x, y = sp.symbols('x,y')
-
+    # Run tests:
+    test_convergence_poisson2d()
+    test_interpolation()
 
 if __name__ == "__main__":
     main()

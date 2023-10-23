@@ -118,7 +118,7 @@ class Wave2D:
         self.initialize(N, mx, my)
 
         l2_err = []
-        l2_err.append(self.l2_error(self.Un, seld.dt))
+        l2_err.append(self.l2_error(self.Un, self.dt))
         
         if store_data > 0:
             plot_data = {0: self.Unm1.copy()}
@@ -177,13 +177,16 @@ class Wave2D:
 
 class Wave2D_Neumann(Wave2D):
     def D2(self, N):
-        raise NotImplementedError
+        D = sparse.diags([1, -2, 1], [-1, 0, 1], (N + 1, N + 1), 'lil')
+        D[0, :4] = -2, 2
+        D[-1, -4:] = 2, -2
+        return D
 
     def ue(self, mx, my):
-        raise NotImplementedError
+        return sp.cos(mx * sp.pi * x) * sp.cos(my * sp.pi * y) * sp.cos(self.w * t)
 
     def apply_bcs(self):
-        raise NotImplementedError
+        pass
 
 def test_convergence_wave2d():
     sol = Wave2D()
@@ -196,12 +199,56 @@ def test_convergence_wave2d_neumann():
     assert abs(r[-1]-2) < 0.05
 
 def test_exact_wave2d():
-    raise NotImplementedError
+    tol = 1E-12
+    mx = my = 2
+    cfl = 1 / np.sqrt(2)
+    N = 3000
+    Nt = 50
 
-def main():
+    # The Dirichlet boundary conditions:
+    solver_dirichlet = Wave2D()
+    _, err_dirch = solver_dirichlet(N, Nt, cfl = cfl, mx = mx, my = my)
+
+    # The Von Neumann boundary condtitions:
+    solver_neumann = Wave2D_Neumann()
+    _, err_neu = solver_neumann(N, Nt, cfl = cfl, mx = mx, my = my)
+
+    assert err_dirch < tol, "The Dirichet boundary conditions have a too large an error"
+    assert err_neu < tol, "The Von Neumann boundary conditions have a too large an error"
+
+def run_tests():
     test_convergence_wave2d()
     test_convergence_wave2d_neumann()
     test_exact_wave2d()
+
+def create_animation():
+    solver = Wave2D_Neumann()
+    filename = "report/neumannwave.gif"
+    
+    cfl = 1 / np.sqrt(2)
+    mx = 2
+    my = 2
+    data = solver(100, 100, cfl = cfl, mx = mx, my = my)
+    xij, yij = solver.xij, solver.yij
+
+    fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+    for n, val in data.items():
+        frame = ax.plot_wireframe(xij, yij, val, rstride=2, cstride=2);
+        frames.append([frame])
+
+    ani = animation.ArtistAnimation(fig, frames, interval=400, blit=True,
+                                repeat_delay=1000)
+    # ani.save(filename, writer='pillow', fps=5)
+
+
+
+def main():
+    # Run tests:
+    run_tests()
+
+    # Create movie:
+    create_animation()
+    plt.show()
 
 if __name__ == "__main__":
     main()
