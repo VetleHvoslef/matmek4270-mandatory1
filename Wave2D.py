@@ -4,7 +4,6 @@ import scipy.sparse as sparse
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib import cm
-from tqdm import trange
 
 x, y, t = sp.symbols('x,y,t')
 
@@ -127,7 +126,7 @@ class Wave2D:
         if store_data == 1:
             plot_data[self.dt] = self.Un.copy()
 
-        for i in trange(1, Nt):
+        for i in range(1, Nt):
             self.Unp1[:] = 2 * self.Un - self.Unm1 + (c * self.dt)**2 * (self.D @ self.Un + self.Un @ self.D.T)
             self.apply_bcs()
 
@@ -168,7 +167,7 @@ class Wave2D:
         E = []
         h = []
         N0 = 8
-        for m in trange(m):
+        for m in range(m):
             dx, err = self(N0, Nt, cfl=cfl, mx=mx, my=my, store_data=-1)
             E.append(err[-1])
             h.append(dx)
