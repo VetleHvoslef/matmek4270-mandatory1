@@ -40,11 +40,6 @@ class Poisson2D:
 
         self.x_axis = x_axis
         self.y_axis = y_axis
-        if self.h == x_axis[1] - x_axis[0]:
-            print("h is equal to dx")
-            print("remove exit")
-            exit()
-
         self.xij, self.yij = np.meshgrid(x_axis, y_axis, indexing = "ij")
 
 
@@ -82,7 +77,7 @@ class Poisson2D:
         for i in boundary_indices:
             A[i] = 0
             A[i, i] = 1
-        A.toscr()
+        A = A.tocsr()
 
         b = F.ravel()
         u_exact = u_exact.ravel()
@@ -201,7 +196,9 @@ def test_interpolation():
 
 def main():
     # Run tests:
+    print("Test 1")
     test_convergence_poisson2d()
+    print("Test 2")
     test_interpolation()
 
 if __name__ == "__main__":
