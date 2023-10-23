@@ -34,8 +34,10 @@ class Poisson2D:
         self.N = N
         self.h = L/N
         x_axis = np.linspace(0, L, N + 1)
-
         y_axis = np.linspace(0, L, N + 1)
+
+        self.x_axis = x_axis
+        self.y_axis = y_axis
         if self.h == x_axis[1] - x_axis[0]:
             print("h is equal to dx")
             print("remove exit")
@@ -147,11 +149,38 @@ class Poisson2D:
         -------
         The value of u(x, y)
 
+        Notes
+        -------
+        For more details about the calculation performed in this function, you can refer to
+        `Bilinear Interpolation in Wikipedia <https://en.wikipedia.org/wiki/Bilinear_interpolation#Weighted_find>`_. 
         """
         # Finding nearest index:
-        ...
-        # Fortsett på denne her:
-        # Bruker dette https://en.wikipedia.org/wiki/Bilinear_interpolation#Weighted_mean
+        x_axis = self.x_axis
+        y_axis = self.y_axis
+        
+        ind_x = np.argmin(np.abs(x_axis - x))
+        ind_y = np.argmin(np.abs(y_axis - y))
+
+        x_1 = x_axis[ind_x]
+        x_2 = x_axis[ind_x + 1]
+
+        y_1 = y_axis[ind_y]
+        y_2 = y_axis[ind_y + 1]
+
+        # Getting the weights
+        w_11 = ((x_2 - x) * (y_2 - y)) / ((x_2 - x_1) * (y_2 - y_1))
+        w_12 = ((x_2 - x) * (y - y_1)) / ((x_2 - x_1) * (y_2 - y_1))
+        w_21 = ((x - x_1) * (y_2 - y)) / ((x_2 - x_1) * (y_2 - y_1))
+        w_22 = ((x - x_1) * (y - y_1)) / ((x_2 - x_1) * (y_2 - y_1))
+
+        # Weighted mean
+        f_11 = self.U[ind_x, ind_y]
+        f_12 = self.U[ind_x, ind_y + 1]
+        f_21 = self.U[ind_x + 1, ind_y]
+        f_22 = self.U[ind_x + 1, ind_y + 1]
+
+        interpolation_ans = w_11 * f_11 + w_12 * f_12 + w_21 * f_21 + w_22 * f_22
+        return interpolation_ans
 
 
 def test_convergence_poisson2d():
