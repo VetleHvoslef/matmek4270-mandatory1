@@ -2,7 +2,9 @@ import numpy as np
 import sympy as sp
 import scipy.sparse as sparse
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 from matplotlib import cm
+from tqdm import trange
 
 x, y, t = sp.symbols('x,y,t')
 
@@ -12,7 +14,7 @@ class Wave2D:
         self.x_axis = np.linspace(0, 1, N + 1)
         self.y_axis = np.linspace(0, 1, N + 1)
         self.h = 1/N
-        self.xji, self.yij = np.meshgrid(self.x_axis, self.y_axis, indexing="ij")
+        self.xij, self.yij = np.meshgrid(self.x_axis, self.y_axis, indexing="ij")
 
     def D2(self, N):
         """Return second order differentiation matrix"""
@@ -125,7 +127,7 @@ class Wave2D:
         if store_data == 1:
             plot_data[self.dt] = self.Un.copy()
 
-        for i in range(1, Nt):
+        for i in trange(1, Nt):
             self.Unp1[:] = 2 * self.Un - self.Unm1 + (c * self.dt)**2 * (self.D @ self.Un + self.Un @ self.D.T)
             self.apply_bcs()
 
@@ -166,7 +168,7 @@ class Wave2D:
         E = []
         h = []
         N0 = 8
-        for m in range(m):
+        for m in trange(m):
             dx, err = self(N0, Nt, cfl=cfl, mx=mx, my=my, store_data=-1)
             E.append(err[-1])
             h.append(dx)
@@ -178,8 +180,8 @@ class Wave2D:
 class Wave2D_Neumann(Wave2D):
     def D2(self, N):
         D = sparse.diags([1, -2, 1], [-1, 0, 1], (N + 1, N + 1), 'lil')
-        D[0, :4] = -2, 2
-        D[-1, -4:] = 2, -2
+        D[0, :2] = -2, 2
+        D[-1, -2:] = 2, -2
         return D
 
     def ue(self, mx, my):
@@ -207,18 +209,23 @@ def test_exact_wave2d():
 
     # The Dirichlet boundary conditions:
     solver_dirichlet = Wave2D()
-    _, err_dirch = solver_dirichlet(N, Nt, cfl = cfl, mx = mx, my = my)
+    _, err_dirich_list = solver_dirichlet(N, Nt, cfl = cfl, mx = mx, my = my)
+    err_dirich = err_dirich_list[-1]
 
     # The Von Neumann boundary condtitions:
     solver_neumann = Wave2D_Neumann()
-    _, err_neu = solver_neumann(N, Nt, cfl = cfl, mx = mx, my = my)
+    _, err_neu_list = solver_neumann(N, Nt, cfl = cfl, mx = mx, my = my)
+    err_neu = err_neu_list[-1]
 
-    assert err_dirch < tol, "The Dirichet boundary conditions have a too large an error"
+    assert err_dirich < tol, "The Dirichet boundary conditions have a too large an error"
     assert err_neu < tol, "The Von Neumann boundary conditions have a too large an error"
 
 def run_tests():
+    print("Test 1")
     test_convergence_wave2d()
+    print("Test 2")
     test_convergence_wave2d_neumann()
+    print("Test 3")
     test_exact_wave2d()
 
 def create_animation():
@@ -228,25 +235,28 @@ def create_animation():
     cfl = 1 / np.sqrt(2)
     mx = 2
     my = 2
-    data = solver(100, 100, cfl = cfl, mx = mx, my = my)
+    data = solver(100, 100, cfl = cfl, mx = mx, my = my, store_data=2)
     xij, yij = solver.xij, solver.yij
 
     fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+    frames = []
     for n, val in data.items():
         frame = ax.plot_wireframe(xij, yij, val, rstride=2, cstride=2);
         frames.append([frame])
 
     ani = animation.ArtistAnimation(fig, frames, interval=400, blit=True,
                                 repeat_delay=1000)
-    # ani.save(filename, writer='pillow', fps=5)
+    ani.save(filename, writer='pillow', fps=5)
 
 
 
 def main():
     # Run tests:
-    run_tests()
+    print("Tests, not running tests")
+    # run_tests()
 
     # Create movie:
+    print("Animation")
     create_animation()
     plt.show()
 
